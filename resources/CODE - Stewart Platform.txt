@@ -1,0 +1,179 @@
+
+
+#include <Servo.h>
+#include <stdio.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <String.h>
+
+/*
+   *******************************************************************************
+     feedback   - in fractions of (1/x),
+         higher x --> reach target location at SLOWER speed but LESS oscillation.
+         lower x  --> reach target location at FASTER speed but MORE oscillation.
+
+     YPR_max    - in degrees,
+         limits the maximum Yaw-Pitch-Roll angle of the moving platform
+
+     servo_mult - constant
+         converts output angle (in radians) to microsecond pulses e.g.
+         pi/3 radians * servo_mult = 600uS
+         -pi/4 radians * servo_mult = -450uS
+   *******************************************************************************
+*/
+const float pi = radians(180), theta_s[6] = {  pi, pi, pi/3, pi/3, -pi/3, -pi/3},
+           L1 = 0.666, L2 = 6, z_home = 110.0,
+           YPR_max = radians(20), servo_min = radians(-60), servo_max = radians(60), feedback = (1/50),
+           servo_mult = (1800/pi), ADC_mult = (YPR_max/512),
+
+             // p = location of servo rotation points in base frame [x/y][1-6]
+             p[2][6] = {{-52.3993, 50.8007, 90.3895, 39.5875, -38.2649, -90.3679}  ,
+                        {74.8623, 74.8623, 6.2712, -80.5588, -80.4696, 5.8204}},
+             // re = location of attachment points in end effector frame [x/y][1-6]
+             re[3][6] = {{-12.0000,  12.0000,  70.2820,  58.2820,  -58.2820,  -70.2820},
+                        {74.2260,  74.2260,  -26.7210,  -47.5060,  -47.5060,  -26.7210},
+                        {-21.075,  -21.075,  -21.075,   -21.075,   -21.075,   -21.075}};
+
+/*
+     theta_r = angle between attachment points
+     theta_p = angle between rotation points
+     theta_s = orientation of the servos
+     RD = distance to end effector attachment points
+     PD = distance to servo rotation points
+     L1 = servo arm length
+     L2 = connecting arm length
+     z_home = default z height with servo arms horizontal
+     servo_min = lower limit for servo arm angle
+     servo_max = upper limit for servo arm angle
+     servo_mult = multiplier to convert to milliseconds
+     re = location of attachment points in end effector frame [x/y][1-6]
+     pe = location and orientation of end effector frame relative to the base frame [sway, surge, heave, pitch, roll, yaw)
+     theta_a = angle of the servo arm
+     servo_pos = value written to each servo
+     q = position of lower mounting point of connecting link [x,y,x][1-6]
+     r = position of upper mounting point of connecting link
+     dl = difference between x,y,z coordinates of q and r
+     dl2 = distance between q and r
+  
+   *******************************************************************************
+    P1 = translation in X direction (sway)          S* = Sin(theta_*)
+    P2 = translation in Y direction (surge)         C* = Cos(theta_*)
+    P3 = translation in Z direction (heave)         e.g. C1 = Cos(theta_1)
+    
+    General Matrix for Yaw-Pitch-Roll-Sway-Surge-Heave Transformation
+    |   C2C3     S1S2C3 - C1S3    C1S2C3 + S1S3    P1  |     |  X  |    |  q[0]  |
+    |   C2S3     S1S2S3 + C1C3    C1S2S3 - S1C3    P2  |  x  |  Y  |  = |  q[1]  |
+    |   -S2          S1C2              C1C2        P3  |     |  Z  |    |  q[2]  |
+    |    0             0                0           1  |     |  1  |    |  1     |
+    where:
+    X = L1          theta_1 = 0
+    Y = 0           theta_2 = theta_a
+    Z = 0           theta_3 = theta_s
+    *******************************************************************************
+*/
+const int servo_pin[6] = {2, 3, 4, 5, 1, 6};  //3,6,10 Reversed
+const int servo_zero[6] = {1710, 1280, 1700, 1300, 1680, 1300};   
+//const int servo_pin[] = {9,3, 5, 11, 6, 10},
+//servo_zero[6] = {1500, 1500, 1500, 1500, 1500, 1500};
+//      servo_pin = servo pin assignments,
+//      servo_zero = zero angles for each servo (horizontal)
+// */ is a multiline comment
+Servo servo[6];
+//      Servos 0, 2, 4: reversed (+ = down, - = up)
+//      Servos 1, 3, 5: normal   (+ = up,   - = down)
+
+
+void setup()
+{
+Serial.begin(9600);// opens serial port, sets data rate to 9600
+ for(int i = 0; i < 6; i++)
+ {
+   servo[i].attach(servo_pin[i]);
+   servo[i].writeMicroseconds(servo_zero[i]);
+ }
+ delay(1000);
+}
+
+void loop()
+{
+  float pe[6] = {0,0,0,radians(0),radians(0),radians(0)  }, theta_a[6], servo_pos[6],q[3][6], r[3][6], dl[3][6], dl2[6];
+
+
+ pe[0] = (analogRead(0)-512)/51.2; // 1023/103.2 for Arduino Mega//
+ pe[1] = (analogRead(1)-512)/51.2;
+ pe[2] = (analogRead(2)-512)/51.2;
+ pe[3] = (analogRead(3)-512)*ADC_mult;//(analogRead(3)-1023)*ADC_mult;//
+ pe[4] = (analogRead(4)-512)*ADC_mult;
+ pe[5] = (analogRead(5)-512)*ADC_mult;
+
+ Serial.println("SERVO");
+ 
+ for(int i = 0; i < 6; i++)
+
+ {
+/*    theta_1=0, Y=0, Z=0, P3=0
+     |   C2C3    0    0    P1  |     |  X  |    |  q[0]  |    | X(C2C3) + P1 |
+     |   C2S3    0    0    P2  |  x  |  0  |  = |  q[1]  | =  | X(C2S3) + P2 |
+     |   -S2     0    0     0  |     |  0  |    |  q[2]  |    | X(-S2)       |
+     |    0      0    0     1  |     |  1  |    |  1     |    |    1         |
+*/
+     // theta_a = angle of the servo arm
+     // theta_s = orientation of the servos
+
+ if(i%2 == 0)
+{
+ q[0][i] = L1*cos(-theta_a[i])*cos(theta_s[i]) + p[0][i];  //EVEN [0,2,4]
+               q[1][i] = L1*cos(-theta_a[i])*sin(theta_s[i]) + p[1][i];
+               q[2][i] = -L1*sin(-theta_a[i]);
+}
+else
+{ 
+q[0][i] = -L1*cos(theta_a[i])*cos(theta_s[i]) + p[0][i];  //ODD  [1,3,5]
+               q[1][i] = -L1*cos(theta_a[i])*sin(theta_s[i]) + p[1][i];
+               q[2][i] = L1*sin(theta_a[i]);
+ }
+
+   // Z = 0 to simplify equation
+   // r = position of upper mounting point of connecting link
+   // re = location of attachment points in end effector frame [x/y][1-6]
+   // pe = location and orientation of end effector frame relative to the base frame [sway, surge, heave, pitch, roll, yaw)
+
+        
+// Calculation of Rotational Matrix from basic equation //
+ r[0][i] = re[0][i] * cos(pe[4]) * cos(pe[5]) + re[1][i] * (sin(pe[3]) * sin(pe[4]) * cos(pe[5]) - cos(pe[3]) * sin(pe[5])) + re[2][i] * ((cos(pe[3]) * sin(pe[4]) * cos(pe[5])) + sin(pe[3]) * sin(pe[5])) + pe[0];
+           r[1][i] = re[0][i] * cos(pe[4]) * sin(pe[5]) + re[1][i] * (cos(pe[3]) * cos(pe[5]) + sin(pe[3]) * sin(pe[4]) * sin(pe[5])) + re[2][i] * ((cos(pe[3]) * sin(pe[4]) * cos(pe[5])) - sin(pe[3]) * cos(pe[5])) + pe[1];
+           r[2][i] = -re[0][i] * sin(pe[4]) + re[1][i] * sin(pe[3]) * cos(pe[4]) + re[2][i] * (cos(pe[3]) * cos(pe[4])) + z_home + pe[2];
+
+   // dl = difference between x,y,z coordinates of q and r
+           dl[0][i] = q[0][i] - r[0][i];
+           dl[1][i] = q[1][i] - r[1][i];
+           dl[2][i] = q[2][i] - r[2][i];
+
+   // dl2 = distance between q and r
+   // L2 = connecting arm length
+           dl2[i] = sqrt(dl[0][i]*dl[0][i] + dl[1][i]*dl[1][i] + dl[2][i]*dl[2][i]) - L2;
+
+   // feedback in fractions of (1/x),
+   // higher x --> reach target location at SLOWER speed but LESS oscillation.
+   //  lower x --> reach target location at FASTER speed but MORE oscillation.
+           theta_a[i] += (dl2[i]*feedback);
+
+  
+Serial.println(dl2);
+ 
+   
+    // theta_a = angle of the servo arm in radians
+    theta_a[i] = constrain(theta_a[i], servo_min, servo_max);
+           
+   if(i%2 == 0) servo_pos[i] = servo_zero[i] + theta_a[i]*servo_mult;    //EVEN - normal
+   else servo_pos[i] = servo_zero[i] - theta_a[i]*servo_mult;            //ODD - reversed
+   //   if(i%2 == 1) servo_pos = servo_zero + theta_a*servo_mult;
+   //   else servo_pos = servo_zero - theta_a*servo_mult;
+ }
+   
+ for(int i = 0; i < 6; i++)
+ {
+   servo[i].writeMicroseconds(servo_pos[i]);
+ }
+delay(500);
+}

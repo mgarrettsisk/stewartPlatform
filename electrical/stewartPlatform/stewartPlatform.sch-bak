@@ -1,0 +1,101 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr USLedger 17000 11000
+encoding utf-8
+Sheet 1 2
+Title "Stewart Platform Main Wiring Schematic"
+Date ""
+Rev ""
+Comp "Marion Garrett Sisk"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L MCU_Module:Arduino_UNO_R3 A?
+U 1 1 60727038
+P 8350 3400
+F 0 "A?" H 8350 2119 50  0000 C CNN
+F 1 "Arduino_UNO_R3" H 8350 2210 50  0000 C CNN
+F 2 "Module:Arduino_UNO_R3" H 8350 3400 50  0001 C CIN
+F 3 "https://www.arduino.cc/en/Main/arduinoBoardUno" H 8350 3400 50  0001 C CNN
+	1    8350 3400
+	-1   0    0    1   
+$EndComp
+$Comp
+L Motor:Motor_Servo M1
+U 1 1 6072907F
+P 10500 1500
+F 0 "M1" V 10540 1331 50  0000 R CNN
+F 1 "Motor_Servo" V 10449 1331 50  0000 R CNN
+F 2 "" H 10500 1310 50  0001 C CNN
+F 3 "http://forums.parallax.com/uploads/attachments/46831/74481.png" H 10500 1310 50  0001 C CNN
+	1    10500 1500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Motor:Motor_Servo M2
+U 1 1 6072A198
+P 11400 1500
+F 0 "M2" V 11440 1331 50  0000 R CNN
+F 1 "Motor_Servo" V 11349 1331 50  0000 R CNN
+F 2 "" H 11400 1310 50  0001 C CNN
+F 3 "http://forums.parallax.com/uploads/attachments/46831/74481.png" H 11400 1310 50  0001 C CNN
+	1    11400 1500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Motor:Motor_Servo M7
+U 1 1 6072AFF7
+P 12250 1500
+F 0 "M7" V 12290 1331 50  0000 R CNN
+F 1 "Motor_Servo" V 12199 1331 50  0000 R CNN
+F 2 "" H 12250 1310 50  0001 C CNN
+F 3 "http://forums.parallax.com/uploads/attachments/46831/74481.png" H 12250 1310 50  0001 C CNN
+	1    12250 1500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Motor:Motor_Servo M3
+U 1 1 6072C54A
+P 10500 4950
+F 0 "M3" V 10448 5156 50  0000 L CNN
+F 1 "Motor_Servo" V 10539 5156 50  0000 L CNN
+F 2 "" H 10500 4760 50  0001 C CNN
+F 3 "http://forums.parallax.com/uploads/attachments/46831/74481.png" H 10500 4760 50  0001 C CNN
+	1    10500 4950
+	0    1    1    0   
+$EndComp
+$Comp
+L Motor:Motor_Servo M4
+U 1 1 6072D5C7
+P 11400 4700
+F 0 "M4" V 11348 4906 50  0000 L CNN
+F 1 "Motor_Servo" V 11439 4906 50  0000 L CNN
+F 2 "" H 11400 4510 50  0001 C CNN
+F 3 "http://forums.parallax.com/uploads/attachments/46831/74481.png" H 11400 4510 50  0001 C CNN
+	1    11400 4700
+	0    1    1    0   
+$EndComp
+$Comp
+L Motor:Motor_Servo M5
+U 1 1 6072F500
+P 12350 4700
+F 0 "M5" V 12298 4906 50  0000 L CNN
+F 1 "Motor_Servo" V 12389 4906 50  0000 L CNN
+F 2 "" H 12350 4510 50  0001 C CNN
+F 3 "http://forums.parallax.com/uploads/attachments/46831/74481.png" H 12350 4510 50  0001 C CNN
+	1    12350 4700
+	0    1    1    0   
+$EndComp
+$Sheet
+S 3500 1900 1500 1100
+U 607402A6
+F0 "Power Supply" 50
+F1 "psuModule.sch" 50
+F2 "+5VDC" O R 5000 2250 50 
+F3 "GND" O R 5000 2650 50 
+$EndSheet
+$EndSCHEMATC
