@@ -1,0 +1,9 @@
+55.48 mm triangle height
+120 degree angle
+
+Outer edge distance (servo to servo): 111 mm
+
+Servo Width: 40 mm
+Servo Height: 20 mm
+
+Mounting Tab Depth: 7.37 mm
