@@ -29,6 +29,53 @@
 Adafruit_MPU6050 mpu;
 Servo servoOne, servoTwo, servoThree, servoFour, servoFive, servoSix;
 
+// instantiate matrix/vector variables
+// physical parameter matrices
+float A_1[3][1] = {{X_A_1},{Y_A_1},{Z_A_1}};
+float A_2[3][1] = {{X_A_2},{Y_A_2},{Z_A_2}};
+float A_3[3][1] = {{X_A_3},{Y_A_3},{Z_A_3}};
+float A_4[3][1] = {{X_A_4},{Y_A_4},{Z_A_4}};
+float A_5[3][1] = {{X_A_5},{Y_A_5},{Z_A_5}};
+float A_6[3][1] = {{X_A_6},{Y_A_6},{Z_A_6}};
+
+float B_1[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+float B_2[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+float B_3[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+float B_4[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+float B_5[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+float B_6[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+
+float P_1[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+float P_2[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+float P_3[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+float P_4[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+float P_5[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+float P_6[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+
+
+// product matrices (intermittent results)
+float P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
+float P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
+float P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
+float P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
+float P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
+float P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
+
+// summation matrices (intermittent results)
+float T_P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
+float T_P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
+float T_P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
+float T_P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
+float T_P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
+float T_P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
+
+// arm length matrices
+float L_1[3][1] = {{0.0},{0.0},{0.0}};
+float L_2[3][1] = {{0.0},{0.0},{0.0}};
+float L_3[3][1] = {{0.0},{0.0},{0.0}};
+float L_4[3][1] = {{0.0},{0.0},{0.0}};
+float L_5[3][1] = {{0.0},{0.0},{0.0}};
+float L_6[3][1] = {{0.0},{0.0},{0.0}};
 
 void setup() {
   
@@ -133,6 +180,47 @@ void loop() {
     {sin(thetaZ)*cos(thetaY), (cos(thetaZ)*cos(thetaX)+sin(thetaZ)*sin(thetaY)*sin(thetaX)), (-cos(thetaZ)*sin(thetaX)+sin(thetaZ)*sin(thetaY)*sin(thetaX))},
     {-sin(thetaY), (cos(thetaY)*sin(thetaX)), (cos(thetaY)*cos(thetaX))}
     };
-  
 
+  // compute the arm length vectors for each of the six servos
+  // Compute product of P_vector and rotational matrix
+  multiplyMatrices(P_1, P_R_b, P_R_b_P_1);
+  multiplyMatrices(P_2, P_R_b, P_R_b_P_2);
+  multiplyMatrices(P_3, P_R_b, P_R_b_P_3);
+  multiplyMatrices(P_4, P_R_b, P_R_b_P_4);
+  multiplyMatrices(P_5, P_R_b, P_R_b_P_5);
+  multiplyMatrices(P_6, P_R_b, P_R_b_P_6);
+
+  // Add the input translational vector to each of the above matrices
+  addMatrices(T_vector, P_R_b_P_1, T_P_R_b_P_1);
+  addMatrices(T_vector, P_R_b_P_2, T_P_R_b_P_2);
+  addMatrices(T_vector, P_R_b_P_3, T_P_R_b_P_3);
+  addMatrices(T_vector, P_R_b_P_4, T_P_R_b_P_4);
+  addMatrices(T_vector, P_R_b_P_5, T_P_R_b_P_5);
+  addMatrices(T_vector, P_R_b_P_6, T_P_R_b_P_6);
+
+  // Subtrace the B vector from each of the above matrices
+  subtractMatrices(T_P_R_b_P_1, B_1, L_1);
+  subtractMatrices(T_P_R_b_P_2, B_2, L_2);
+  subtractMatrices(T_P_R_b_P_3, B_3, L_3);
+  subtractMatrices(T_P_R_b_P_4, B_4, L_4);
+  subtractMatrices(T_P_R_b_P_5, B_5, L_5);
+  subtractMatrices(T_P_R_b_P_6, B_6, L_6);
+
+  
+}
+
+void multiplyMatrices(float A[3][3], float B[3][1], float C[3][1]) {
+  // this method takes three matrices as inputs, performs the matrix multiplication A*B and adds results as
+  // elements to C
+  
+}
+
+void addMatrices(float A[3][1], float B[3][1], float C[3][1]) {
+  // this method takes two column vectors of length 3 and adds them together
+  
+}
+
+void subtractMatrices(float A[3][1], float B[3][1], float C[3][1]) {
+  // this method takes two column vectors of length 3 and subtracts them.
+  
 }

@@ -36,65 +36,64 @@
 // from the Solidworks Assembly using the "Evaluate -> Measure" tool. 
 
 // For Servo One
-#define x_A_1
-#define y_A_1
-#define z_A_1
-#define x_B_1
-#define y_B_1
-#define z_B_1
-#define x_P_1
-#define y_P_1
-#define z_P_1
+#define X_A_1
+#define Y_A_1
+#define Z_A_1
+#define X_B_1
+#define Y_B_1
+#define Z_B_1
+#define X_P_1
+#define Y_P_1
+#define Z_P_1
 // For Servo Two
-#define x_A_2
-#define y_A_2
-#define z_A_2
-#define x_B_2
-#define y_B_2
-#define z_B_2
-#define x_P_2
-#define y_P_2
-#define z_P_2
+#define X_A_2
+#define Y_A_2
+#define Z_A_2
+#define X_B_2
+#define Y_B_2
+#define Z_B_2
+#define X_P_2
+#define Y_P_2
+#define Z_P_2
 // For Servo Three
-#define x_A_3
-#define y_A_3
-#define z_A_3
-#define x_B_3
-#define y_B_3
-#define z_B_3
-#define x_P_3
-#define y_P_3
-#define z_P_3
+#define X_A_3
+#define Y_A_3
+#define Z_A_3
+#define X_B_3
+#define Y_B_3
+#define Z_B_3
+#define X_P_3
+#define Y_P_3
+#define Z_P_3
 // For Servo Four
-#define x_A_4
-#define y_A_4
-#define z_A_4
-#define x_B_4
-#define y_B_4
-#define z_B_4
-#define x_P_4
-#define y_P_4
-#define z_P_4
+#define X_A_4
+#define Y_A_4
+#define Z_A_4
+#define X_B_4
+#define Y_B_4
+#define Z_B_4
+#define X_P_4
+#define Y_P_4
+#define Z_P_4
 // For Servo Five
-#define x_A_5
-#define y_A_5
-#define z_A_5
-#define x_B_5
-#define y_B_5
-#define z_B_5
-#define x_P_5
-#define y_P_5
-#define z_P_5
+#define X_A_5
+#define Y_A_5
+#define Z_A_5
+#define X_B_5
+#define Y_B_5
+#define Z_B_5
+#define X_P_5
+#define Y_P_5
+#define Z_P_5
 // For Servo Six
-#define x_A_6
-#define y_A_6
-#define z_A_6
-#define x_B_6
-#define y_B_6
-#define z_B_6
-#define x_P_6
-#define y_P_6
-#define z_P_6
-
+#define X_A_6
+#define Y_A_6
+#define Z_A_6
+#define X_B_6
+#define Y_B_6
+#define Z_B_6
+#define X_P_6
+#define Y_P_6
+#define Z_P_6
 
 #endif // _CONFIGURATION_H
