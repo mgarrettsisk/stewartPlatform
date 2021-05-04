@@ -1,0 +1,11 @@
+INPUT_1 -> MxN Array = A
+INPUT_2 -> NxP Array = B
+
+GOAL: RETURN an MxP ARRAY equal to the matrix product A*B = C
+
+ITERATE OVER THE RESULTANT MATRIX
+
+for (i = 0; i < M; i++)
+	for (j = 0; j < P; j++)
+		for (k = 0; k < N; k++)
+			C[i][j] = A[i][k] * B[k][j];
