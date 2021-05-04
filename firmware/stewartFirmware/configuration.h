@@ -35,6 +35,10 @@
 // Set "P" is defined in the top reference frame. All values are given from their respective origins, and have beent taken
 // from the Solidworks Assembly using the "Evaluate -> Measure" tool. 
 
+// Linkage Length Parameters
+#define SERVO_ARM         23.0
+#define LINKAGE_ARM       75.0
+
 // For Servo One
 #define X_A_1
 #define Y_A_1
@@ -45,6 +49,7 @@
 #define X_P_1
 #define Y_P_1
 #define Z_P_1
+#define BETA_ONE
 // For Servo Two
 #define X_A_2
 #define Y_A_2
@@ -55,6 +60,7 @@
 #define X_P_2
 #define Y_P_2
 #define Z_P_2
+#define BETA_TWO
 // For Servo Three
 #define X_A_3
 #define Y_A_3
@@ -65,6 +71,7 @@
 #define X_P_3
 #define Y_P_3
 #define Z_P_3
+#define BETA_THREE
 // For Servo Four
 #define X_A_4
 #define Y_A_4
@@ -75,6 +82,7 @@
 #define X_P_4
 #define Y_P_4
 #define Z_P_4
+#define BETA_FOUR
 // For Servo Five
 #define X_A_5
 #define Y_A_5
@@ -85,6 +93,7 @@
 #define X_P_5
 #define Y_P_5
 #define Z_P_5
+#define BETA_FIVE
 // For Servo Six
 #define X_A_6
 #define Y_A_6
@@ -95,5 +104,6 @@
 #define X_P_6
 #define Y_P_6
 #define Z_P_6
+#define BETA_SIX
 
 #endif // _CONFIGURATION_H

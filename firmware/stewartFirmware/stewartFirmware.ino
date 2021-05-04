@@ -183,12 +183,12 @@ void loop() {
 
   // compute the arm length vectors for each of the six servos
   // Compute product of P_vector and rotational matrix
-  multiplyMatrices(P_1, P_R_b, P_R_b_P_1);
-  multiplyMatrices(P_2, P_R_b, P_R_b_P_2);
-  multiplyMatrices(P_3, P_R_b, P_R_b_P_3);
-  multiplyMatrices(P_4, P_R_b, P_R_b_P_4);
-  multiplyMatrices(P_5, P_R_b, P_R_b_P_5);
-  multiplyMatrices(P_6, P_R_b, P_R_b_P_6);
+  multiplyMatrices(P_R_b, P_1, P_R_b_P_1);
+  multiplyMatrices(P_R_b, P_2, P_R_b_P_2);
+  multiplyMatrices(P_R_b, P_3, P_R_b_P_3);
+  multiplyMatrices(P_R_b, P_4, P_R_b_P_4);
+  multiplyMatrices(P_R_b, P_5, P_R_b_P_5);
+  multiplyMatrices(P_R_b, P_6, P_R_b_P_6);
 
   // Add the input translational vector to each of the above matrices
   addMatrices(T_vector, P_R_b_P_1, T_P_R_b_P_1);
@@ -211,16 +211,22 @@ void loop() {
 
 void multiplyMatrices(float A[3][3], float B[3][1], float C[3][1]) {
   // this method takes three matrices as inputs, performs the matrix multiplication A*B and adds results as
-  // elements to C
-  
-}
+  // elements to C. Only a single loop is needed since the output is a 3x1 vector.
+  for (int i = 0; i < 3; i++) {
+    C[i][1] = C[1][1] + (A[i][1]*B[i][1]) + (A[i][2]*B[i][1]) + (A[i][3]*B[i][1]);
+    }
+  }
 
 void addMatrices(float A[3][1], float B[3][1], float C[3][1]) {
   // this method takes two column vectors of length 3 and adds them together
-  
+  for (int i = 0; i < 3; i++) {
+    C[i][1] = A[i][1] + B[i][1];
+  }
 }
 
 void subtractMatrices(float A[3][1], float B[3][1], float C[3][1]) {
   // this method takes two column vectors of length 3 and subtracts them.
-  
+  for (int i = 0; i < 3; i++) {
+    C[i][1] = A[i][1] - B[i][1];
+  }
 }
