@@ -49,7 +49,7 @@
 #define X_P_1
 #define Y_P_1
 #define Z_P_1
-#define BETA_ONE
+#define BETA_ONE          0.0 // degrees
 // For Servo Two
 #define X_A_2
 #define Y_A_2
@@ -60,7 +60,7 @@
 #define X_P_2
 #define Y_P_2
 #define Z_P_2
-#define BETA_TWO
+#define BETA_TWO          0.0 // degrees
 // For Servo Three
 #define X_A_3
 #define Y_A_3
@@ -71,7 +71,7 @@
 #define X_P_3
 #define Y_P_3
 #define Z_P_3
-#define BETA_THREE
+#define BETA_THREE        30.0 // degrees
 // For Servo Four
 #define X_A_4
 #define Y_A_4
@@ -82,7 +82,7 @@
 #define X_P_4
 #define Y_P_4
 #define Z_P_4
-#define BETA_FOUR
+#define BETA_FOUR         30.0 // degrees
 // For Servo Five
 #define X_A_5
 #define Y_A_5
@@ -93,7 +93,7 @@
 #define X_P_5
 #define Y_P_5
 #define Z_P_5
-#define BETA_FIVE
+#define BETA_FIVE         -30.0 // degrees
 // For Servo Six
 #define X_A_6
 #define Y_A_6
@@ -104,6 +104,6 @@
 #define X_P_6
 #define Y_P_6
 #define Z_P_6
-#define BETA_SIX
+#define BETA_SIX          -30.0 // degrees
 
 #endif // _CONFIGURATION_H

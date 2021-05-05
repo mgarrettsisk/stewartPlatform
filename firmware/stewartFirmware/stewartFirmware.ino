@@ -24,58 +24,62 @@
 #include <stdio.h>
 #include <SPI.h>
 #include <String.h>
+#include <math.h>
 
 // create variables/objects
+double inputVector[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 Adafruit_MPU6050 mpu;
 Servo servoOne, servoTwo, servoThree, servoFour, servoFive, servoSix;
+double L1, L2, L3, L4, L5, L6;
+double alpha1, alpha2, alpha3, alpha4, alpha5, alpha6;
 
 // instantiate matrix/vector variables
 // physical parameter matrices
-float A_1[3][1] = {{X_A_1},{Y_A_1},{Z_A_1}};
-float A_2[3][1] = {{X_A_2},{Y_A_2},{Z_A_2}};
-float A_3[3][1] = {{X_A_3},{Y_A_3},{Z_A_3}};
-float A_4[3][1] = {{X_A_4},{Y_A_4},{Z_A_4}};
-float A_5[3][1] = {{X_A_5},{Y_A_5},{Z_A_5}};
-float A_6[3][1] = {{X_A_6},{Y_A_6},{Z_A_6}};
+double A_1[3][1] = {{X_A_1},{Y_A_1},{Z_A_1}};
+double A_2[3][1] = {{X_A_2},{Y_A_2},{Z_A_2}};
+double A_3[3][1] = {{X_A_3},{Y_A_3},{Z_A_3}};
+double A_4[3][1] = {{X_A_4},{Y_A_4},{Z_A_4}};
+double A_5[3][1] = {{X_A_5},{Y_A_5},{Z_A_5}};
+double A_6[3][1] = {{X_A_6},{Y_A_6},{Z_A_6}};
 
-float B_1[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-float B_2[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-float B_3[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-float B_4[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-float B_5[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-float B_6[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_1[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_2[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_3[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_4[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_5[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_6[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
 
-float P_1[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-float P_2[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-float P_3[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-float P_4[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-float P_5[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-float P_6[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_1[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_2[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_3[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_4[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_5[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_6[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
 
 
 // product matrices (intermittent results)
-float P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
-float P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
-float P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
-float P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
-float P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
-float P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
+double P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
+double P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
+double P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
+double P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
+double P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
+double P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
 
 // summation matrices (intermittent results)
-float T_P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
-float T_P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
-float T_P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
-float T_P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
-float T_P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
-float T_P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
+double T_P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
+double T_P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
+double T_P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
+double T_P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
+double T_P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
+double T_P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
 
 // arm length matrices
-float L_1[3][1] = {{0.0},{0.0},{0.0}};
-float L_2[3][1] = {{0.0},{0.0},{0.0}};
-float L_3[3][1] = {{0.0},{0.0},{0.0}};
-float L_4[3][1] = {{0.0},{0.0},{0.0}};
-float L_5[3][1] = {{0.0},{0.0},{0.0}};
-float L_6[3][1] = {{0.0},{0.0},{0.0}};
+double L_1[3][1] = {{0.0},{0.0},{0.0}};
+double L_2[3][1] = {{0.0},{0.0},{0.0}};
+double L_3[3][1] = {{0.0},{0.0},{0.0}};
+double L_4[3][1] = {{0.0},{0.0},{0.0}};
+double L_5[3][1] = {{0.0},{0.0},{0.0}};
+double L_6[3][1] = {{0.0},{0.0},{0.0}};
 
 void setup() {
   
@@ -112,7 +116,7 @@ void loop() {
   //          Intertial Measurement Unit Inputs and Time Step
   //
   //-------------------------------------------------------------------------------------------------------
-
+  /*
   // get start time for measurement
   int startTime = millis();
   
@@ -121,20 +125,20 @@ void loop() {
   mpu.getEvent(&a, &g, &temp);
   
   // get X acceleration
-  float xAccel = X_OFFSET + a.acceleration.x;
+  double xAccel = X_OFFSET + a.acceleration.x;
   // get Y acceleration
-  float yAccel = Y_OFFSET + a.acceleration.y;
+  double yAccel = Y_OFFSET + a.acceleration.y;
   // get Z acceleration
-  float zAccel = Z_OFFSET + a.acceleration.z;
+  double zAccel = Z_OFFSET + a.acceleration.z;
   // get roll acceleration (around X-axis)
-  float xRoll = X_ROLL_OFFSET + g.gyro.x;
+  double xRoll = X_ROLL_OFFSET + g.gyro.x;
   // get pitch acceleration (around Y-axis)
-  float yRoll = Y_ROLL_OFFSET + g.gyro.y;
+  double yRoll = Y_ROLL_OFFSET + g.gyro.y;
   // get heading acceleration (around Z-axis)
-  float zRoll = Z_ROLL_OFFSET + g.gyro.z;
+  double zRoll = Z_ROLL_OFFSET + g.gyro.z;
 
   // account for gravity effect in Z-Axis
-  zRoll = zRoll + 9.81; // m/s^2
+  zAccel = zAccel + 9.81; // m/s^2
 
   // get end time for measurement
   int endTime = millis();
@@ -149,40 +153,46 @@ void loop() {
   //-------------------------------------------------------------------------------------------------------
   
   // translational conversions
-  float xVelocity = V_0 + xAccel*timeStep;
-  float xPos = S_0 + xVelocity*timeStep + (1/2)*xAccel*(timeStep^2);
-  float yVelocity = V_0 + yAccel*timeStep;
-  float yPos = S_0 + yVelocity*timeStep + (1/2)*yAccel*(timeStep^2);
-  float zVelocity = V_0 + zAccel*timeStep;
-  float zPos = S_0 + zVelocity*timeStep + (1/2)*zAccel*(timeStep^2);
+  double xVelocity = V_0 + xAccel*timeStep;
+  double xPos = S_0 + xVelocity*timeStep + (1/2)*xAccel*(timeStep^2);
+  double yVelocity = V_0 + yAccel*timeStep;
+  double yPos = S_0 + yVelocity*timeStep + (1/2)*yAccel*(timeStep^2);
+  double zVelocity = V_0 + zAccel*timeStep;
+  double zPos = S_0 + zVelocity*timeStep + (1/2)*zAccel*(timeStep^2);
 
   // rotational conversions
-  float xOmega = OMEGA_0 + xRoll*timeStep;
-  float thetaX = THETA_0 + xOmega*timeStep + (1/2)*xRoll*(timeStep^2);
-  float yOmega = OMEGA_0 + yRoll*timeStep;
-  float thetaY = THETA_0 + yOmega*timeStep + (1/2)*yRoll*(timeStep^2);
-  float zOmega = OMEGA_0 + zRoll*timeStep;
-  float thetaZ = THETA_0 + zOmega*timeStep + (1/2)*zRoll*(timeStep^2);
-
+  double xOmega = OMEGA_0 + xRoll*timeStep;
+  double thetaX = THETA_0 + xOmega*timeStep + (1/2)*xRoll*(timeStep^2);
+  double yOmega = OMEGA_0 + yRoll*timeStep;
+  double thetaY = THETA_0 + yOmega*timeStep + (1/2)*yRoll*(timeStep^2);
+  double zOmega = OMEGA_0 + zRoll*timeStep;
+  double thetaZ = THETA_0 + zOmega*timeStep + (1/2)*zRoll*(timeStep^2);
+  */
   
   //-------------------------------------------------------------------------------------------------------
   //
   //          Translation of Raw Position Commands to PWM Signals for Servo Actuation
   //
   //-------------------------------------------------------------------------------------------------------
-
+  // set desired position
+  inputVector[0] = 10.0;
+  inputVector[1] = 10.0;
+  inputVector[2] = 10.0;
+  inputVector[3] = 5.0;
+  inputVector[4] = 5.0;
+  inputVector[5] = 5.0;
   // Compute the translational input vector based on integrated values from accelerometer sensor
-  float T_vector[3][1] = {{xPos}, {yPos}, {zPos}};
+  double T_vector[3][1] = {{inputVector[0]}, {inputVector[1]}, {inputVector[2]}};
 
   // Compute the rotational matrix based on integrated values from gyroscope sensor
-  float P_R_b[3][3] = {
-    {cos(thetaZ)*cos(thetaY), (-sin(thetaZ)*cos(thetaX)+cos(thetaZ)*sin(thetaY)*sin(thetaX)), (sin(thetaZ)*sin(thetaX)+cos(thetaZ)*sin(thetaY)*cos(thetaX))},
-    {sin(thetaZ)*cos(thetaY), (cos(thetaZ)*cos(thetaX)+sin(thetaZ)*sin(thetaY)*sin(thetaX)), (-cos(thetaZ)*sin(thetaX)+sin(thetaZ)*sin(thetaY)*sin(thetaX))},
-    {-sin(thetaY), (cos(thetaY)*sin(thetaX)), (cos(thetaY)*cos(thetaX))}
+  double P_R_b[3][3] = {
+    {cos(inputVector[5])*cos(inputVector[4]), (-sin(inputVector[5])*cos(inputVector[3])+cos(inputVector[5])*sin(inputVector[4])*sin(inputVector[3])), (sin(inputVector[5])*sin(inputVector[3])+cos(inputVector[5])*sin(inputVector[4])*cos(inputVector[3]))},
+    {sin(inputVector[5])*cos(inputVector[4]), (cos(inputVector[5])*cos(inputVector[3])+sin(inputVector[5])*sin(inputVector[4])*sin(inputVector[3])), (-cos(inputVector[5])*sin(inputVector[3])+sin(inputVector[5])*sin(inputVector[4])*sin(inputVector[3]))},
+    {-sin(inputVector[4]), (cos(inputVector[4])*sin(inputVector[3])), (cos(inputVector[4])*cos(inputVector[3]))}
     };
 
   // compute the arm length vectors for each of the six servos
-  // Compute product of P_vector and rotational matrix
+  // Compute product of P_vector and rotational matrix (Note: function equal to P_R_b * P_n = P_R_b_P_n)
   multiplyMatrices(P_R_b, P_1, P_R_b_P_1);
   multiplyMatrices(P_R_b, P_2, P_R_b_P_2);
   multiplyMatrices(P_R_b, P_3, P_R_b_P_3);
@@ -190,7 +200,7 @@ void loop() {
   multiplyMatrices(P_R_b, P_5, P_R_b_P_5);
   multiplyMatrices(P_R_b, P_6, P_R_b_P_6);
 
-  // Add the input translational vector to each of the above matrices
+  // Add the input translational vector to each of the above matrices (Note: T_vector + P_R_b_P_n = T_P_R_b_P_n)
   addMatrices(T_vector, P_R_b_P_1, T_P_R_b_P_1);
   addMatrices(T_vector, P_R_b_P_2, T_P_R_b_P_2);
   addMatrices(T_vector, P_R_b_P_3, T_P_R_b_P_3);
@@ -198,7 +208,7 @@ void loop() {
   addMatrices(T_vector, P_R_b_P_5, T_P_R_b_P_5);
   addMatrices(T_vector, P_R_b_P_6, T_P_R_b_P_6);
 
-  // Subtrace the B vector from each of the above matrices
+  // Subtrace the B vector from each of the above matrices (Note: T_P_R_b_P_n - B_n = L_n)
   subtractMatrices(T_P_R_b_P_1, B_1, L_1);
   subtractMatrices(T_P_R_b_P_2, B_2, L_2);
   subtractMatrices(T_P_R_b_P_3, B_3, L_3);
@@ -206,27 +216,94 @@ void loop() {
   subtractMatrices(T_P_R_b_P_5, B_5, L_5);
   subtractMatrices(T_P_R_b_P_6, B_6, L_6);
 
-  
+  // calculate the raw lengths of the arms
+  L1 = vectorMagnitude(L_1);
+  L2 = vectorMagnitude(L_2);
+  L3 = vectorMagnitude(L_3);
+  L4 = vectorMagnitude(L_4);
+  L5 = vectorMagnitude(L_5);
+  L6 = vectorMagnitude(L_6);
+
+  // calculate alpha for each servo
+  alpha1 = calculateServoAngle(P_1, B_1, L1, LINKAGE_ARM, SERVO_ARM, BETA_ONE);
+  alpha2 = calculateServoAngle(P_2, B_2, L2, LINKAGE_ARM, SERVO_ARM, BETA_TWO);
+  alpha3 = calculateServoAngle(P_3, B_3, L3, LINKAGE_ARM, SERVO_ARM, BETA_THREE);
+  alpha4 = calculateServoAngle(P_4, B_4, L4, LINKAGE_ARM, SERVO_ARM, BETA_FOUR);
+  alpha5 = calculateServoAngle(P_5, B_5, L5, LINKAGE_ARM, SERVO_ARM, BETA_FIVE);
+  alpha6 = calculateServoAngle(P_6, B_6, L6, LINKAGE_ARM, SERVO_ARM, BETA_SIX);
+
+  Serial.println("Servo Angle Solutions.....");
+  Serial.print("Servo 1 = ");
+  Serial.println(alpha1);
+  Serial.print("Servo 2 = ");
+  Serial.println(alpha2);
+  Serial.print("Servo 3 = ");
+  Serial.println(alpha3);
+  Serial.print("Servo 4 = ");
+  Serial.println(alpha4);
+  Serial.print("Servo 5 = ");
+  Serial.println(alpha5);
+  Serial.print("Servo 6 = ");
+  Serial.println(alpha6);
+  Serial.println("-------------------------------");
+
+  // move the actual servo
+  writeToServo(servoOne, alpha1);
+  writeToServo(servoTwo, -alpha2);
+  writeToServo(servoThree, alpha3);
+  writeToServo(servoFour, -alpha4);
+  writeToServo(servoFive, alpha5);
+  writeToServo(servoSix, -alpha6);
 }
 
-void multiplyMatrices(float A[3][3], float B[3][1], float C[3][1]) {
+//-------------------------------------------------------------------------------------------------------
+//
+//          Utility and Mathematic Functions
+//
+//-------------------------------------------------------------------------------------------------------
+
+void multiplyMatrices(double A[3][3], double B[3][1], double C[3][1]) {
   // this method takes three matrices as inputs, performs the matrix multiplication A*B and adds results as
   // elements to C. Only a single loop is needed since the output is a 3x1 vector.
   for (int i = 0; i < 3; i++) {
-    C[i][1] = C[1][1] + (A[i][1]*B[i][1]) + (A[i][2]*B[i][1]) + (A[i][3]*B[i][1]);
+    C[i][0] = (A[i][0]*B[i][0]) + (A[i][1]*B[i][0]) + (A[i][2]*B[i][0]);
     }
   }
 
-void addMatrices(float A[3][1], float B[3][1], float C[3][1]) {
+void addMatrices(double A[3][1], double B[3][1], double C[3][1]) {
   // this method takes two column vectors of length 3 and adds them together
   for (int i = 0; i < 3; i++) {
-    C[i][1] = A[i][1] + B[i][1];
+    C[i][0] = A[i][0] + B[i][0];
   }
 }
 
-void subtractMatrices(float A[3][1], float B[3][1], float C[3][1]) {
+void subtractMatrices(double A[3][1], double B[3][1], double C[3][1]) {
   // this method takes two column vectors of length 3 and subtracts them.
   for (int i = 0; i < 3; i++) {
-    C[i][1] = A[i][1] - B[i][1];
+    C[i][0] = A[i][0] - B[i][0];
   }
+}
+
+double vectorMagnitude(double A[3][1]) {
+  // this method returns the scalar magnitude of the vector provided
+  double output = sqrt( pow(A[0][0],2) + pow(A[1][0],2) + pow(A[2][0],2) );
+  return output;
+}
+
+double calculateServoAngle(double P_vector[3][1], double B_vector[3][1], double inputL, double inputS, double inputA, double inputBeta) {
+  double alpha;
+  // calculate "Big L"
+  double bigL = pow(inputL,2) - ( pow(inputS,2) - pow(inputA,2) );
+  // calculate "Big M"
+  double bigM = 2 * inputA * (P_vector[2][0] - B_vector[2][0]);
+  // calculate "Big N"
+  double bigN = 2 * inputA * (cos(inputBeta)*(P_vector[0][0] - B_vector[0][0]) + sin(inputBeta)*(P_vector[1][0] - B_vector[1][0]));
+  // calculate first element
+  alpha = asin(bigL/sqrt(pow(bigM,2)+pow(bigN,2))) - atan(bigN/bigM);
+  return alpha;
+}
+
+void writeToServo(Servo servoObject, double angle) {
+  // this function writes the angle to the actual servo specified
+  servoObject.write(angle);
 }
