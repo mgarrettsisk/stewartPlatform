@@ -17,6 +17,7 @@
  */
 #include "configuration.h"
 
+#include <Arduino.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
@@ -91,17 +92,17 @@ void setup() {
 
   // set up the servo motors and set all of them to home position
   servoOne.attach(SERVO_ONE_PIN);
-  servoOne.writeMicroseconds(SERVO_ZERO_PWM);
+  servoOne.write(90+SERVO_HOME_ANGLE);
   servoTwo.attach(SERVO_TWO_PIN);
-  servoTwo.writeMicroseconds(SERVO_ZERO_PWM);
+  servoTwo.write(90-SERVO_HOME_ANGLE);
   servoThree.attach(SERVO_THREE_PIN);
-  servoThree.writeMicroseconds(SERVO_ZERO_PWM);
+  servoThree.write(90+SERVO_HOME_ANGLE);
   servoFour.attach(SERVO_FOUR_PIN);
-  servoFour.writeMicroseconds(SERVO_ZERO_PWM);
+  servoFour.write(90-SERVO_HOME_ANGLE);
   servoFive.attach(SERVO_FIVE_PIN);
-  servoFive.writeMicroseconds(SERVO_ZERO_PWM);
+  servoFive.write(90+SERVO_HOME_ANGLE);
   servoSix.attach(SERVO_SIX_PIN);  
-  servoSix.writeMicroseconds(SERVO_ZERO_PWM);
+  servoSix.write(90-SERVO_HOME_ANGLE);
 
   // Set up a serial port for debugging
 
@@ -175,12 +176,12 @@ void loop() {
   //
   //-------------------------------------------------------------------------------------------------------
   // set desired position
-  inputVector[0] = 10.0;
-  inputVector[1] = 10.0;
-  inputVector[2] = 10.0;
-  inputVector[3] = 5.0;
-  inputVector[4] = 5.0;
-  inputVector[5] = 5.0;
+  inputVector[0] = 0;
+  inputVector[1] = 0;
+  inputVector[2] = 125;
+  inputVector[3] = radians(0);
+  inputVector[4] = radians(0);
+  inputVector[5] = radians(0);
   // Compute the translational input vector based on integrated values from accelerometer sensor
   double T_vector[3][1] = {{inputVector[0]}, {inputVector[1]}, {inputVector[2]}};
 
@@ -191,6 +192,25 @@ void loop() {
     {-sin(inputVector[4]), (cos(inputVector[4])*sin(inputVector[3])), (cos(inputVector[4])*cos(inputVector[3]))}
     };
 
+  Serial.print("P_R_b[0][0] is equal to: ");
+  Serial.println(P_R_b[0][0]);
+  Serial.print("P_R_b[0][1] is equal to: ");
+  Serial.println(P_R_b[0][1]);
+  Serial.print("P_R_b[0][2] is equal to: ");
+  Serial.println(P_R_b[0][2]);
+  Serial.print("P_R_b[1][0] is equal to: ");
+  Serial.println(P_R_b[1][0]);
+  Serial.print("P_R_b[1][1] is equal to: ");
+  Serial.println(P_R_b[1][1]);
+  Serial.print("P_R_b[1][2] is equal to: ");
+  Serial.println(P_R_b[1][2]);
+  Serial.print("P_R_b[2][0] is equal to: ");
+  Serial.println(P_R_b[2][0]);
+  Serial.print("P_R_b[2][1] is equal to: ");
+  Serial.println(P_R_b[2][1]);
+  Serial.print("P_R_b[2][2] is equal to: ");
+  Serial.println(P_R_b[2][2]);
+  Serial.println("-----------------------------------");
   // compute the arm length vectors for each of the six servos
   // Compute product of P_vector and rotational matrix (Note: function equal to P_R_b * P_n = P_R_b_P_n)
   multiplyMatrices(P_R_b, P_1, P_R_b_P_1);
@@ -199,6 +219,25 @@ void loop() {
   multiplyMatrices(P_R_b, P_4, P_R_b_P_4);
   multiplyMatrices(P_R_b, P_5, P_R_b_P_5);
   multiplyMatrices(P_R_b, P_6, P_R_b_P_6);
+  Serial.print("P_R_b_P_1[0][0] is equal to: ");
+  Serial.println(P_R_b_P_1[0][0]);
+  Serial.print("P_R_b_P_1[0][0] is equal to: ");
+  Serial.println(P_R_b_P_1[0][0]);
+  Serial.print("P_R_b_P_1[0][0] is equal to: ");
+  Serial.println(P_R_b_P_1[0][0]);
+  Serial.print("P_R_b[1][0] is equal to: ");
+  Serial.println(P_R_b[1][0]);
+  Serial.print("P_R_b[1][1] is equal to: ");
+  Serial.println(P_R_b[1][1]);
+  Serial.print("P_R_b[1][2] is equal to: ");
+  Serial.println(P_R_b[1][2]);
+  Serial.print("P_R_b[2][0] is equal to: ");
+  Serial.println(P_R_b[2][0]);
+  Serial.print("P_R_b[2][1] is equal to: ");
+  Serial.println(P_R_b[2][1]);
+  Serial.print("P_R_b[2][2] is equal to: ");
+  Serial.println(P_R_b[2][2]);
+  Serial.println("-----------------------------------");
 
   // Add the input translational vector to each of the above matrices (Note: T_vector + P_R_b_P_n = T_P_R_b_P_n)
   addMatrices(T_vector, P_R_b_P_1, T_P_R_b_P_1);
@@ -223,38 +262,56 @@ void loop() {
   L4 = vectorMagnitude(L_4);
   L5 = vectorMagnitude(L_5);
   L6 = vectorMagnitude(L_6);
+  
+  Serial.println("Arm Length Solutions.....");
+  Serial.print("Servo 1 = ");
+  Serial.println(L1);
+  Serial.print("Servo 2 = ");
+  Serial.println(L2);
+  Serial.print("Servo 3 = ");
+  Serial.println(L3);
+  Serial.print("Servo 4 = ");
+  Serial.println(L4);
+  Serial.print("Servo 5 = ");
+  Serial.println(L5);
+  Serial.print("Servo 6 = ");
+  Serial.println(L6);
+  Serial.println("-------------------------------");
 
   // calculate alpha for each servo
-  alpha1 = calculateServoAngle(P_1, B_1, L1, LINKAGE_ARM, SERVO_ARM, BETA_ONE);
-  alpha2 = calculateServoAngle(P_2, B_2, L2, LINKAGE_ARM, SERVO_ARM, BETA_TWO);
-  alpha3 = calculateServoAngle(P_3, B_3, L3, LINKAGE_ARM, SERVO_ARM, BETA_THREE);
-  alpha4 = calculateServoAngle(P_4, B_4, L4, LINKAGE_ARM, SERVO_ARM, BETA_FOUR);
-  alpha5 = calculateServoAngle(P_5, B_5, L5, LINKAGE_ARM, SERVO_ARM, BETA_FIVE);
-  alpha6 = calculateServoAngle(P_6, B_6, L6, LINKAGE_ARM, SERVO_ARM, BETA_SIX);
+  alpha1 = calculateServoAngle(T_P_R_b_P_1, B_1, L1, LINKAGE_ARM, SERVO_ARM, radians(BETA_ONE));
+  alpha2 = calculateServoAngle(T_P_R_b_P_2, B_2, L2, LINKAGE_ARM, SERVO_ARM, radians(BETA_TWO));
+  alpha3 = calculateServoAngle(T_P_R_b_P_3, B_3, L3, LINKAGE_ARM, SERVO_ARM, radians(BETA_THREE));
+  alpha4 = calculateServoAngle(T_P_R_b_P_4, B_4, L4, LINKAGE_ARM, SERVO_ARM, radians(BETA_FOUR));
+  alpha5 = calculateServoAngle(T_P_R_b_P_5, B_5, L5, LINKAGE_ARM, SERVO_ARM, radians(BETA_FIVE));
+  alpha6 = calculateServoAngle(T_P_R_b_P_6, B_6, L6, LINKAGE_ARM, SERVO_ARM, radians(BETA_SIX));
 
   Serial.println("Servo Angle Solutions.....");
   Serial.print("Servo 1 = ");
-  Serial.println(alpha1);
+  Serial.println(degrees(alpha1));
   Serial.print("Servo 2 = ");
-  Serial.println(alpha2);
+  Serial.println(degrees(alpha2));
   Serial.print("Servo 3 = ");
-  Serial.println(alpha3);
+  Serial.println(degrees(alpha3));
   Serial.print("Servo 4 = ");
-  Serial.println(alpha4);
+  Serial.println(degrees(alpha4));
   Serial.print("Servo 5 = ");
-  Serial.println(alpha5);
+  Serial.println(degrees(alpha5));
   Serial.print("Servo 6 = ");
-  Serial.println(alpha6);
+  Serial.println(degrees(alpha6));
   Serial.println("-------------------------------");
 
   // move the actual servo
-  writeToServo(servoOne, alpha1);
-  writeToServo(servoTwo, -alpha2);
-  writeToServo(servoThree, alpha3);
-  writeToServo(servoFour, -alpha4);
-  writeToServo(servoFive, alpha5);
-  writeToServo(servoSix, -alpha6);
+  writeToServo(servoOne, 90-degrees(alpha1));
+  writeToServo(servoTwo, 90+degrees(alpha2));
+  writeToServo(servoThree, 90-degrees(alpha3));
+  writeToServo(servoFour, 90+degrees(alpha4));
+  writeToServo(servoFive, 90-degrees(alpha5));
+  writeToServo(servoSix, 90+degrees(alpha6));
+
+  delay(2000);
 }
+
 
 //-------------------------------------------------------------------------------------------------------
 //
@@ -290,14 +347,20 @@ double vectorMagnitude(double A[3][1]) {
   return output;
 }
 
-double calculateServoAngle(double P_vector[3][1], double B_vector[3][1], double inputL, double inputS, double inputA, double inputBeta) {
+double calculateServoAngle(double Q_vector[3][1], double B_vector[3][1], double inputL, double inputS, double inputA, double inputBeta) {
   double alpha;
   // calculate "Big L"
   double bigL = pow(inputL,2) - ( pow(inputS,2) - pow(inputA,2) );
+  Serial.print("Big L = ");
+  Serial.println(bigL);
   // calculate "Big M"
-  double bigM = 2 * inputA * (P_vector[2][0] - B_vector[2][0]);
+  double bigM = 2 * inputA * (Q_vector[2][0] - B_vector[2][0]);
+  Serial.print("Big M = ");
+  Serial.println(bigM);
   // calculate "Big N"
-  double bigN = 2 * inputA * (cos(inputBeta)*(P_vector[0][0] - B_vector[0][0]) + sin(inputBeta)*(P_vector[1][0] - B_vector[1][0]));
+  double bigN = 2 * inputA * (cos(radians(inputBeta))*(Q_vector[0][0] - B_vector[0][0]) + sin(radians(inputBeta))*(Q_vector[1][0] - B_vector[1][0]));
+  Serial.print("Big N = ");
+  Serial.println(bigN);
   // calculate first element
   alpha = asin(bigL/sqrt(pow(bigM,2)+pow(bigN,2))) - atan(bigN/bigM);
   return alpha;
