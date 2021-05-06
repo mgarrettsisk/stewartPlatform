@@ -2,17 +2,23 @@
  *  Stewart Platform Firmware
  *  
  *  This software is written to operate a 6-DOF Stewart Platform. It uses an MPU6050 IMU to provide sensor data.
- *  This data is then used to keep the top platform stable as the bottom moves around. 
+ *  Full implementation of this data has yet to occur, however the results are displayed in a serial terminal. 
  *  
  *  This code uses derivations taken from the following sources:
  *  
  *  https://content.instructables.com/ORIG/FFI/8ZXW/I55MMY14/FFI8ZXWI55MMY14.pdf
  *  https://www.xarg.org/paper/inverse-kinematics-of-a-stewart-platform/
  *  
- *  For an in depth description of the mathematics, please see the above links.
+ *  For an in depth description of the mathematics, please see the above links. Note that the derivation given in
+ *  source 1 (instructables link) has an error in the derivation that causes the formulas to fail. 
+ *  
+ *  When deriving the results for l^2 and s^2, the P vector values are used, and this is incorrect. They need to 
+ *  be the Q vector values (vector between the origin of the base and platform mounting point.) Another script
+ *  has been written to more easily diagnose issues with the transformations involved. See mathTestScript.m in the
+ *  parent directory. It must be run in MATLAB and mirrors the mathematics performed here.
  *  
  *  Written by Garrett Sisk
- *  garrett@gsisk.com
+ *  garrett@gsisk.com or msisk2@students.kennesaw.edu
  * 
  */
 #include "configuration.h"
@@ -28,21 +34,15 @@
 #include <math.h>
 
 // create variables/objects
-double inputVector[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+double translational[3] = {0.0, 0.0, 0.0};
+double rotational[3] = {0.0, 0.0, 0.0};
 Adafruit_MPU6050 mpu;
 Servo servoOne, servoTwo, servoThree, servoFour, servoFive, servoSix;
 double L1, L2, L3, L4, L5, L6;
 double alpha1, alpha2, alpha3, alpha4, alpha5, alpha6;
 
 // instantiate matrix/vector variables
-// physical parameter matrices
-double A_1[3][1] = {{X_A_1},{Y_A_1},{Z_A_1}};
-double A_2[3][1] = {{X_A_2},{Y_A_2},{Z_A_2}};
-double A_3[3][1] = {{X_A_3},{Y_A_3},{Z_A_3}};
-double A_4[3][1] = {{X_A_4},{Y_A_4},{Z_A_4}};
-double A_5[3][1] = {{X_A_5},{Y_A_5},{Z_A_5}};
-double A_6[3][1] = {{X_A_6},{Y_A_6},{Z_A_6}};
-
+// Servo Output Shaft Position Vectors (in base frame)
 double B_1[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
 double B_2[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
 double B_3[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
@@ -50,6 +50,7 @@ double B_4[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
 double B_5[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
 double B_6[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
 
+// Platform Mounting Point Position Vectors (in platform frame)
 double P_1[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
 double P_2[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
 double P_3[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
@@ -57,24 +58,23 @@ double P_4[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
 double P_5[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
 double P_6[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
 
-
 // product matrices (intermittent results)
-double P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
-double P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
-double P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
-double P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
-double P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
-double P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
+double RP_1[3][1] = {{0.0},{0.0},{0.0}};
+double RP_2[3][1] = {{0.0},{0.0},{0.0}};
+double RP_3[3][1] = {{0.0},{0.0},{0.0}};
+double RP_4[3][1] = {{0.0},{0.0},{0.0}};
+double RP_5[3][1] = {{0.0},{0.0},{0.0}};
+double RP_6[3][1] = {{0.0},{0.0},{0.0}};
 
 // summation matrices (intermittent results)
-double T_P_R_b_P_1[3][1] = {{0.0},{0.0},{0.0}};
-double T_P_R_b_P_2[3][1] = {{0.0},{0.0},{0.0}};
-double T_P_R_b_P_3[3][1] = {{0.0},{0.0},{0.0}};
-double T_P_R_b_P_4[3][1] = {{0.0},{0.0},{0.0}};
-double T_P_R_b_P_5[3][1] = {{0.0},{0.0},{0.0}};
-double T_P_R_b_P_6[3][1] = {{0.0},{0.0},{0.0}};
+double Q_1[3][1] = {{0.0},{0.0},{0.0}};
+double Q_2[3][1] = {{0.0},{0.0},{0.0}};
+double Q_3[3][1] = {{0.0},{0.0},{0.0}};
+double Q_4[3][1] = {{0.0},{0.0},{0.0}};
+double Q_5[3][1] = {{0.0},{0.0},{0.0}};
+double Q_6[3][1] = {{0.0},{0.0},{0.0}};
 
-// arm length matrices
+// arm length matrices (final results, prior to servo conversion)
 double L_1[3][1] = {{0.0},{0.0},{0.0}};
 double L_2[3][1] = {{0.0},{0.0},{0.0}};
 double L_3[3][1] = {{0.0},{0.0},{0.0}};
@@ -88,25 +88,30 @@ void setup() {
   mpu.begin();
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+  mpu.setFilterBandwidth(MPU6050_BAND_20_HZ);
 
   // set up the servo motors and set all of them to home position
-  servoOne.attach(SERVO_ONE_PIN);
-  servoOne.write(90+SERVO_HOME_ANGLE);
-  servoTwo.attach(SERVO_TWO_PIN);
-  servoTwo.write(90-SERVO_HOME_ANGLE);
-  servoThree.attach(SERVO_THREE_PIN);
-  servoThree.write(90+SERVO_HOME_ANGLE);
-  servoFour.attach(SERVO_FOUR_PIN);
-  servoFour.write(90-SERVO_HOME_ANGLE);
-  servoFive.attach(SERVO_FIVE_PIN);
-  servoFive.write(90+SERVO_HOME_ANGLE);
-  servoSix.attach(SERVO_SIX_PIN);  
-  servoSix.write(90-SERVO_HOME_ANGLE);
+  servoOne.attach(SERVO_ONE_PIN,SERVO_MIN_PWM, SERVO_MAX_PWM);
+  servoOne.writeMicroseconds(SERVO_ZERO_PWM);
+  
+  servoTwo.attach(SERVO_TWO_PIN, SERVO_MIN_PWM, SERVO_MAX_PWM);
+  servoTwo.writeMicroseconds(SERVO_ZERO_PWM);
+  
+  servoThree.attach(SERVO_THREE_PIN, SERVO_MIN_PWM, SERVO_MAX_PWM);
+  servoThree.writeMicroseconds(SERVO_ZERO_PWM);
+  
+  servoFour.attach(SERVO_FOUR_PIN, SERVO_MIN_PWM, SERVO_MAX_PWM);
+  servoFour.writeMicroseconds(SERVO_ZERO_PWM);
+  
+  servoFive.attach(SERVO_FIVE_PIN, SERVO_MIN_PWM, SERVO_MAX_PWM);
+  servoFive.writeMicroseconds(SERVO_ZERO_PWM);
+  
+  servoSix.attach(SERVO_SIX_PIN, SERVO_MIN_PWM, SERVO_MAX_PWM);  
+  servoSix.writeMicroseconds(SERVO_ZERO_PWM);
 
   // Set up a serial port for debugging
 
-Serial.begin(9600);// opens serial port, sets data rate to 9600
+Serial.begin(115200);// opens serial port, sets data rate to 115200 bps
 Serial.println("Stewart Platform Initalizing....");
 delay(1000);
 }
@@ -176,41 +181,22 @@ void loop() {
   //
   //-------------------------------------------------------------------------------------------------------
   // set desired position
-  inputVector[0] = 0;
-  inputVector[1] = 0;
-  inputVector[2] = 125;
-  inputVector[3] = radians(0);
-  inputVector[4] = radians(0);
-  inputVector[5] = radians(0);
-  // Compute the translational input vector based on integrated values from accelerometer sensor
-  double T_vector[3][1] = {{inputVector[0]}, {inputVector[1]}, {inputVector[2]}};
 
-  // Compute the rotational matrix based on integrated values from gyroscope sensor
-  double P_R_b[3][3] = {
-    {cos(inputVector[5])*cos(inputVector[4]), (-sin(inputVector[5])*cos(inputVector[3])+cos(inputVector[5])*sin(inputVector[4])*sin(inputVector[3])), (sin(inputVector[5])*sin(inputVector[3])+cos(inputVector[5])*sin(inputVector[4])*cos(inputVector[3]))},
-    {sin(inputVector[5])*cos(inputVector[4]), (cos(inputVector[5])*cos(inputVector[3])+sin(inputVector[5])*sin(inputVector[4])*sin(inputVector[3])), (-cos(inputVector[5])*sin(inputVector[3])+sin(inputVector[5])*sin(inputVector[4])*sin(inputVector[3]))},
-    {-sin(inputVector[4]), (cos(inputVector[4])*sin(inputVector[3])), (cos(inputVector[4])*cos(inputVector[3]))}
-    };
 
-  Serial.print("P_R_b[0][0] is equal to: ");
-  Serial.println(P_R_b[0][0]);
-  Serial.print("P_R_b[0][1] is equal to: ");
-  Serial.println(P_R_b[0][1]);
-  Serial.print("P_R_b[0][2] is equal to: ");
-  Serial.println(P_R_b[0][2]);
-  Serial.print("P_R_b[1][0] is equal to: ");
-  Serial.println(P_R_b[1][0]);
-  Serial.print("P_R_b[1][1] is equal to: ");
-  Serial.println(P_R_b[1][1]);
-  Serial.print("P_R_b[1][2] is equal to: ");
-  Serial.println(P_R_b[1][2]);
-  Serial.print("P_R_b[2][0] is equal to: ");
-  Serial.println(P_R_b[2][0]);
-  Serial.print("P_R_b[2][1] is equal to: ");
-  Serial.println(P_R_b[2][1]);
-  Serial.print("P_R_b[2][2] is equal to: ");
-  Serial.println(P_R_b[2][2]);
-  Serial.println("-----------------------------------");
+  // Set values in the 
+  double T[3][1] = {{translation[0]}, {translation[1]}, {translation[2]}};
+
+  // Compute the rotational matrix
+  double Phi = radians(rotation[0]);
+  double Theta = radians(rotation[1]);
+  double Psi = radians(rotation[2]);
+  
+  double R = {
+              {cos(Phi)*cos(Theta),   -sin(Phi)*cos(Psi)+cos(Phi)*sin(Theta)*sin(Psi),   sin(Phi)*sin(Psi)+cos(Phi)*sin(Theta)*cos(Psi)},
+              {sin(Phi)*cos(Theta),   cos(Phi)*cos(Psi)+sin(Phi)*sin(Theta)*sin(Psi),   -cos(Phi)*sin(Psi)+sin(Phi)*sin(Theta)*cos(Psi)},
+              {-sin(Theta),           cos(Theta)*sin(Psi),                               cos(Theta)*cos(Psi)}                            
+             };
+  
   // compute the arm length vectors for each of the six servos
   // Compute product of P_vector and rotational matrix (Note: function equal to P_R_b * P_n = P_R_b_P_n)
   multiplyMatrices(P_R_b, P_1, P_R_b_P_1);
@@ -219,25 +205,6 @@ void loop() {
   multiplyMatrices(P_R_b, P_4, P_R_b_P_4);
   multiplyMatrices(P_R_b, P_5, P_R_b_P_5);
   multiplyMatrices(P_R_b, P_6, P_R_b_P_6);
-  Serial.print("P_R_b_P_1[0][0] is equal to: ");
-  Serial.println(P_R_b_P_1[0][0]);
-  Serial.print("P_R_b_P_1[0][0] is equal to: ");
-  Serial.println(P_R_b_P_1[0][0]);
-  Serial.print("P_R_b_P_1[0][0] is equal to: ");
-  Serial.println(P_R_b_P_1[0][0]);
-  Serial.print("P_R_b[1][0] is equal to: ");
-  Serial.println(P_R_b[1][0]);
-  Serial.print("P_R_b[1][1] is equal to: ");
-  Serial.println(P_R_b[1][1]);
-  Serial.print("P_R_b[1][2] is equal to: ");
-  Serial.println(P_R_b[1][2]);
-  Serial.print("P_R_b[2][0] is equal to: ");
-  Serial.println(P_R_b[2][0]);
-  Serial.print("P_R_b[2][1] is equal to: ");
-  Serial.println(P_R_b[2][1]);
-  Serial.print("P_R_b[2][2] is equal to: ");
-  Serial.println(P_R_b[2][2]);
-  Serial.println("-----------------------------------");
 
   // Add the input translational vector to each of the above matrices (Note: T_vector + P_R_b_P_n = T_P_R_b_P_n)
   addMatrices(T_vector, P_R_b_P_1, T_P_R_b_P_1);
@@ -263,21 +230,6 @@ void loop() {
   L5 = vectorMagnitude(L_5);
   L6 = vectorMagnitude(L_6);
   
-  Serial.println("Arm Length Solutions.....");
-  Serial.print("Servo 1 = ");
-  Serial.println(L1);
-  Serial.print("Servo 2 = ");
-  Serial.println(L2);
-  Serial.print("Servo 3 = ");
-  Serial.println(L3);
-  Serial.print("Servo 4 = ");
-  Serial.println(L4);
-  Serial.print("Servo 5 = ");
-  Serial.println(L5);
-  Serial.print("Servo 6 = ");
-  Serial.println(L6);
-  Serial.println("-------------------------------");
-
   // calculate alpha for each servo
   alpha1 = calculateServoAngle(T_P_R_b_P_1, B_1, L1, LINKAGE_ARM, SERVO_ARM, radians(BETA_ONE));
   alpha2 = calculateServoAngle(T_P_R_b_P_2, B_2, L2, LINKAGE_ARM, SERVO_ARM, radians(BETA_TWO));
@@ -286,30 +238,8 @@ void loop() {
   alpha5 = calculateServoAngle(T_P_R_b_P_5, B_5, L5, LINKAGE_ARM, SERVO_ARM, radians(BETA_FIVE));
   alpha6 = calculateServoAngle(T_P_R_b_P_6, B_6, L6, LINKAGE_ARM, SERVO_ARM, radians(BETA_SIX));
 
-  Serial.println("Servo Angle Solutions.....");
-  Serial.print("Servo 1 = ");
-  Serial.println(degrees(alpha1));
-  Serial.print("Servo 2 = ");
-  Serial.println(degrees(alpha2));
-  Serial.print("Servo 3 = ");
-  Serial.println(degrees(alpha3));
-  Serial.print("Servo 4 = ");
-  Serial.println(degrees(alpha4));
-  Serial.print("Servo 5 = ");
-  Serial.println(degrees(alpha5));
-  Serial.print("Servo 6 = ");
-  Serial.println(degrees(alpha6));
-  Serial.println("-------------------------------");
-
   // move the actual servo
-  writeToServo(servoOne, 90-degrees(alpha1));
-  writeToServo(servoTwo, 90+degrees(alpha2));
-  writeToServo(servoThree, 90-degrees(alpha3));
-  writeToServo(servoFour, 90+degrees(alpha4));
-  writeToServo(servoFive, 90-degrees(alpha5));
-  writeToServo(servoSix, 90+degrees(alpha6));
 
-  delay(2000);
 }
 
 
@@ -364,9 +294,4 @@ double calculateServoAngle(double Q_vector[3][1], double B_vector[3][1], double 
   // calculate first element
   alpha = asin(bigL/sqrt(pow(bigM,2)+pow(bigN,2))) - atan(bigN/bigM);
   return alpha;
-}
-
-void writeToServo(Servo servoObject, double angle) {
-  // this function writes the angle to the actual servo specified
-  servoObject.write(angle);
 }
