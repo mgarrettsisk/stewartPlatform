@@ -3,8 +3,8 @@ clear all;
 clc;
 %% Commanded Position Vector (translational only)
 
-INPUT = [0; 0; 0;];
-ROTATION = [5; 5; 5];
+INPUT = [0; 0; 0];
+ROTATION = [0; 0; 0];
 
 %% Set Constants
 

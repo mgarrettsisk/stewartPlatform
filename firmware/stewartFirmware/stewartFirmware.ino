@@ -34,29 +34,32 @@
 #include <math.h>
 
 // create variables/objects
-double translational[3] = {0.0, 0.0, 0.0};
-double rotational[3] = {0.0, 0.0, 0.0};
+double translation[3] = {0.0, 0.0, 0.0};
+double rotation[3] = {0.0, 0.0, 0.0};
 Adafruit_MPU6050 mpu;
 Servo servoOne, servoTwo, servoThree, servoFour, servoFive, servoSix;
 double L1, L2, L3, L4, L5, L6;
 double alpha1, alpha2, alpha3, alpha4, alpha5, alpha6;
 
+String inputString;
+
+
 // instantiate matrix/vector variables
 // Servo Output Shaft Position Vectors (in base frame)
 double B_1[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-double B_2[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-double B_3[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-double B_4[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-double B_5[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
-double B_6[3][1] = {{X_B_1},{Y_B_1},{Z_B_1}};
+double B_2[3][1] = {{X_B_2},{Y_B_2},{Z_B_2}};
+double B_3[3][1] = {{X_B_3},{Y_B_3},{Z_B_3}};
+double B_4[3][1] = {{X_B_4},{Y_B_4},{Z_B_4}};
+double B_5[3][1] = {{X_B_5},{Y_B_5},{Z_B_5}};
+double B_6[3][1] = {{X_B_6},{Y_B_6},{Z_B_6}};
 
 // Platform Mounting Point Position Vectors (in platform frame)
 double P_1[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-double P_2[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-double P_3[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-double P_4[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-double P_5[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
-double P_6[3][1] = {{X_P_1},{Y_P_1},{Z_P_1}};
+double P_2[3][1] = {{X_P_2},{Y_P_2},{Z_P_2}};
+double P_3[3][1] = {{X_P_3},{Y_P_3},{Z_P_3}};
+double P_4[3][1] = {{X_P_4},{Y_P_4},{Z_P_4}};
+double P_5[3][1] = {{X_P_5},{Y_P_5},{Z_P_5}};
+double P_6[3][1] = {{X_P_6},{Y_P_6},{Z_P_6}};
 
 // product matrices (intermittent results)
 double RP_1[3][1] = {{0.0},{0.0},{0.0}};
@@ -88,7 +91,7 @@ void setup() {
   mpu.begin();
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_20_HZ);
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
 
   // set up the servo motors and set all of them to home position
   servoOne.attach(SERVO_ONE_PIN,SERVO_MIN_PWM, SERVO_MAX_PWM);
@@ -112,6 +115,9 @@ void setup() {
   // Set up a serial port for debugging
 
 Serial.begin(115200);// opens serial port, sets data rate to 115200 bps
+if( !Serial ) {
+  // wait for the serial to connect
+}
 Serial.println("Stewart Platform Initalizing....");
 delay(1000);
 }
@@ -122,7 +128,7 @@ void loop() {
   //          Intertial Measurement Unit Inputs and Time Step
   //
   //-------------------------------------------------------------------------------------------------------
-  /*
+
   // get start time for measurement
   int startTime = millis();
   
@@ -165,6 +171,8 @@ void loop() {
   double yPos = S_0 + yVelocity*timeStep + (1/2)*yAccel*(timeStep^2);
   double zVelocity = V_0 + zAccel*timeStep;
   double zPos = S_0 + zVelocity*timeStep + (1/2)*zAccel*(timeStep^2);
+  Serial.print("Translational Values: X: "); Serial.print(xPos); Serial.print(", Y:"); Serial.print(yPos);
+  Serial.print(", Z"); Serial.print(zPos); Serial.println();
 
   // rotational conversions
   double xOmega = OMEGA_0 + xRoll*timeStep;
@@ -173,7 +181,8 @@ void loop() {
   double thetaY = THETA_0 + yOmega*timeStep + (1/2)*yRoll*(timeStep^2);
   double zOmega = OMEGA_0 + zRoll*timeStep;
   double thetaZ = THETA_0 + zOmega*timeStep + (1/2)*zRoll*(timeStep^2);
-  */
+  Serial.print("Rotational Values: X:"); Serial.print(thetaX); Serial.print(", Y:"); Serial.print(thetaY);
+  Serial.print(", Z:"); Serial.print(thetaZ); Serial.println();
   
   //-------------------------------------------------------------------------------------------------------
   //
@@ -181,46 +190,50 @@ void loop() {
   //
   //-------------------------------------------------------------------------------------------------------
   // set desired position
+  if (Serial.available() > 0) {
+      inputString = Serial.readStringUntil("\n");
+  }
 
+  //translation[1] = (double)inputString.toInt();
+  translation[2] = (double)inputString.toInt();
 
   // Set values in the 
-  double T[3][1] = {{translation[0]}, {translation[1]}, {translation[2]}};
+  double T[3][1] = {{translation[0]}, {translation[1]}, {translation[2]+H_0}};
 
   // Compute the rotational matrix
   double Phi = radians(rotation[0]);
   double Theta = radians(rotation[1]);
   double Psi = radians(rotation[2]);
   
-  double R = {
+  double R[3][3] = {
               {cos(Phi)*cos(Theta),   -sin(Phi)*cos(Psi)+cos(Phi)*sin(Theta)*sin(Psi),   sin(Phi)*sin(Psi)+cos(Phi)*sin(Theta)*cos(Psi)},
               {sin(Phi)*cos(Theta),   cos(Phi)*cos(Psi)+sin(Phi)*sin(Theta)*sin(Psi),   -cos(Phi)*sin(Psi)+sin(Phi)*sin(Theta)*cos(Psi)},
               {-sin(Theta),           cos(Theta)*sin(Psi),                               cos(Theta)*cos(Psi)}                            
              };
   
-  // compute the arm length vectors for each of the six servos
   // Compute product of P_vector and rotational matrix (Note: function equal to P_R_b * P_n = P_R_b_P_n)
-  multiplyMatrices(P_R_b, P_1, P_R_b_P_1);
-  multiplyMatrices(P_R_b, P_2, P_R_b_P_2);
-  multiplyMatrices(P_R_b, P_3, P_R_b_P_3);
-  multiplyMatrices(P_R_b, P_4, P_R_b_P_4);
-  multiplyMatrices(P_R_b, P_5, P_R_b_P_5);
-  multiplyMatrices(P_R_b, P_6, P_R_b_P_6);
+  multiplyMatrices(R, P_1, RP_1);
+  multiplyMatrices(R, P_2, RP_2);
+  multiplyMatrices(R, P_3, RP_3);
+  multiplyMatrices(R, P_4, RP_4);
+  multiplyMatrices(R, P_5, RP_5);
+  multiplyMatrices(R, P_6, RP_6);
 
   // Add the input translational vector to each of the above matrices (Note: T_vector + P_R_b_P_n = T_P_R_b_P_n)
-  addMatrices(T_vector, P_R_b_P_1, T_P_R_b_P_1);
-  addMatrices(T_vector, P_R_b_P_2, T_P_R_b_P_2);
-  addMatrices(T_vector, P_R_b_P_3, T_P_R_b_P_3);
-  addMatrices(T_vector, P_R_b_P_4, T_P_R_b_P_4);
-  addMatrices(T_vector, P_R_b_P_5, T_P_R_b_P_5);
-  addMatrices(T_vector, P_R_b_P_6, T_P_R_b_P_6);
-
+  addMatrices(T, RP_1, Q_1);
+  addMatrices(T, RP_2, Q_2);
+  addMatrices(T, RP_3, Q_3);
+  addMatrices(T, RP_4, Q_4);
+  addMatrices(T, RP_5, Q_5);
+  addMatrices(T, RP_6, Q_6);
+  
   // Subtrace the B vector from each of the above matrices (Note: T_P_R_b_P_n - B_n = L_n)
-  subtractMatrices(T_P_R_b_P_1, B_1, L_1);
-  subtractMatrices(T_P_R_b_P_2, B_2, L_2);
-  subtractMatrices(T_P_R_b_P_3, B_3, L_3);
-  subtractMatrices(T_P_R_b_P_4, B_4, L_4);
-  subtractMatrices(T_P_R_b_P_5, B_5, L_5);
-  subtractMatrices(T_P_R_b_P_6, B_6, L_6);
+  subtractMatrices(Q_1, B_1, L_1);
+  subtractMatrices(Q_2, B_2, L_2);
+  subtractMatrices(Q_3, B_3, L_3);
+  subtractMatrices(Q_4, B_4, L_4);
+  subtractMatrices(Q_5, B_5, L_5);
+  subtractMatrices(Q_6, B_6, L_6);
 
   // calculate the raw lengths of the arms
   L1 = vectorMagnitude(L_1);
@@ -229,17 +242,24 @@ void loop() {
   L4 = vectorMagnitude(L_4);
   L5 = vectorMagnitude(L_5);
   L6 = vectorMagnitude(L_6);
-  
+
   // calculate alpha for each servo
-  alpha1 = calculateServoAngle(T_P_R_b_P_1, B_1, L1, LINKAGE_ARM, SERVO_ARM, radians(BETA_ONE));
-  alpha2 = calculateServoAngle(T_P_R_b_P_2, B_2, L2, LINKAGE_ARM, SERVO_ARM, radians(BETA_TWO));
-  alpha3 = calculateServoAngle(T_P_R_b_P_3, B_3, L3, LINKAGE_ARM, SERVO_ARM, radians(BETA_THREE));
-  alpha4 = calculateServoAngle(T_P_R_b_P_4, B_4, L4, LINKAGE_ARM, SERVO_ARM, radians(BETA_FOUR));
-  alpha5 = calculateServoAngle(T_P_R_b_P_5, B_5, L5, LINKAGE_ARM, SERVO_ARM, radians(BETA_FIVE));
-  alpha6 = calculateServoAngle(T_P_R_b_P_6, B_6, L6, LINKAGE_ARM, SERVO_ARM, radians(BETA_SIX));
+  alpha1 = calculateServoAngle(Q_1, B_1, L1, BETA_ONE);
+  alpha2 = calculateServoAngle(Q_2, B_2, L2, BETA_TWO);
+  alpha3 = calculateServoAngle(Q_3, B_3, L3, BETA_THREE);
+  alpha4 = calculateServoAngle(Q_4, B_4, L4, BETA_FOUR);
+  alpha5 = calculateServoAngle(Q_5, B_5, L5, BETA_FIVE);
+  alpha6 = calculateServoAngle(Q_6, B_6, L6, BETA_SIX);
 
   // move the actual servo
+  servoOne.writeMicroseconds(convertAngleToPWM(alpha1, 1));
+  servoTwo.writeMicroseconds(convertAngleToPWM(alpha2, 2));
+  servoThree.writeMicroseconds(convertAngleToPWM(alpha3, 3));
+  servoFour.writeMicroseconds(convertAngleToPWM(alpha4, 4));
+  servoFive.writeMicroseconds(convertAngleToPWM(alpha5, 5));
+  servoSix.writeMicroseconds(convertAngleToPWM(alpha6, 6));
 
+  delay(2000);
 }
 
 
@@ -277,21 +297,22 @@ double vectorMagnitude(double A[3][1]) {
   return output;
 }
 
-double calculateServoAngle(double Q_vector[3][1], double B_vector[3][1], double inputL, double inputS, double inputA, double inputBeta) {
-  double alpha;
+double calculateServoAngle(double Q_vector[3][1], double B_vector[3][1], double inputL, double inputBeta) {
   // calculate "Big L"
-  double bigL = pow(inputL,2) - ( pow(inputS,2) - pow(inputA,2) );
-  Serial.print("Big L = ");
-  Serial.println(bigL);
+  double bigL = pow(inputL,2) - ( pow(LINKAGE_ARM,2) - pow(SERVO_ARM,2) );
   // calculate "Big M"
-  double bigM = 2 * inputA * (Q_vector[2][0] - B_vector[2][0]);
-  Serial.print("Big M = ");
-  Serial.println(bigM);
+  double bigM = 2 * SERVO_ARM * (Q_vector[2][0] - B_vector[2][0]);
   // calculate "Big N"
-  double bigN = 2 * inputA * (cos(radians(inputBeta))*(Q_vector[0][0] - B_vector[0][0]) + sin(radians(inputBeta))*(Q_vector[1][0] - B_vector[1][0]));
-  Serial.print("Big N = ");
-  Serial.println(bigN);
-  // calculate first element
-  alpha = asin(bigL/sqrt(pow(bigM,2)+pow(bigN,2))) - atan(bigN/bigM);
-  return alpha;
+  double bigN = 2 * SERVO_ARM * (cos(radians(inputBeta))*(Q_vector[0][0] - B_vector[0][0]) + sin(radians(inputBeta))*(Q_vector[1][0] - B_vector[1][0]));
+  // calculate alpha
+  return asin(bigL/sqrt(pow(bigM,2)+pow(bigN,2))) - atan(bigN/bigM);
+}
+
+double convertAngleToPWM(double inputAngle, int inputType) {
+  // if the input type is 1, the servo motor is an odd entry. If the input type is 2, the servo motor is an even entry
+  if (inputType == 2 || inputType == 4 || inputType == 6) { // if the type is even
+    return SERVO_ZERO_PWM - (inputAngle - radians(ALPHA_0)) * SERVO_CONVERT;
+  } else {
+    return SERVO_ZERO_PWM + (inputAngle - radians(ALPHA_0)) * SERVO_CONVERT;
+  }
 }

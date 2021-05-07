@@ -29,6 +29,7 @@
 #define SERVO_ZERO_PWM    1500
 #define SERVO_MAX_PWM     2000
 #define SERVO_MIN_PWM     1000
+#define SERVO_CONVERT     318.31
 
 
 // Physical Dimension Parameters - all values given in millimeters. Set "B" is defined in the base reference frame.
@@ -44,7 +45,7 @@
 #define SERVO_ARM         24.0
 #define LINKAGE_ARM       122.5
 #define H_0               120.7606
-#define ALPHA_0           10.2671 // degrees
+#define ALPHA_0           10.7332 // degrees
 
 // For Servo One
 #define X_B_1             73.5
