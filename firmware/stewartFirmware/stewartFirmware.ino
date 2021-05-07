@@ -195,7 +195,7 @@ void loop() {
   }
 
   //translation[1] = (double)inputString.toInt();
-  translation[2] = (double)inputString.toInt();
+  translation[0] = (double)inputString.toInt();
 
   // Set values in the 
   double T[3][1] = {{translation[0]}, {translation[1]}, {translation[2]+H_0}};
